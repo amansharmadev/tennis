@@ -1,0 +1,183 @@
+<html>
+<title>
+    Table Tennis
+</title>
+
+<body>
+    <canvas id="gameScreen"> </canvas>
+</body>
+<style>
+    body {
+        margin: 0;
+        padding: 0;
+    }
+</style>
+<script>
+    let gameScreen = document.getElementById('gameScreen');
+    gameScreen.height = window.innerHeight;
+    gameScreen.width = window.innerWidth;
+    let content = gameScreen.getContext("2d");
+    let fps = 60;
+    let ballPosition = {
+        x: 50,
+        y: 50
+    }
+    let speed = {
+        hori: 5,
+        vert: 6
+    };
+    let padPosition = 0;
+    let gameStatus = 'stopped'
+    let game;
+    let gameObject;
+    let pressSpace = false;
+    window.onload = function () {
+        let starter = new drawScreen();
+        starter.welcome();
+        gameObject = new playGame();
+        document.onkeydown = function (event) {
+            if (event.code == 'Space'&&pressSpace==false){
+                starter.start();
+                pressSpace=true;
+            }
+            if (event.code == 'Enter'&&pressSpace) {
+                if (gameStatus == 'stopped')
+                    start();
+                else if (gameStatus == 'running')
+                    stop();
+            }
+            if (event.code == 'Numpad4' || event.code == 'digit4' || event.code == 'ArrowLeft')
+                gameObject.movePad('left')
+            if (event.code == 'Numpad6' || event.code == 'digit6' || event.code == 'ArrowRight')
+                gameObject.movePad('right');
+        }
+        document.body.onresize = function () {
+            gameScreen.height = window.innerHeight;
+            gameScreen.width = window.innerWidth;
+            gameObject.putBallInPlaceAfterResizing()
+            stop();
+        }
+    }
+    function delay(ms) {
+        return new Promise(res => setTimeout(res, ms));
+    }
+    function fillBlack() {
+        content.fillStyle = 'black';
+        content.fillRect(0, 0, gameScreen.width, gameScreen.height);
+    }
+    function drawRect(x, y, width, height, color) {
+        content.fillStyle = color;
+        content.fillRect(x, y, width, height);
+    }
+    function drawBall() {
+        content.fillStyle = 'white'
+        content.beginPath();
+        content.arc(ballPosition.x, ballPosition.y, 10, 0, Math.PI * 2);
+        content.fill();
+    }
+    function drawPad() {
+        drawRect(padPosition, gameScreen.height - 20, 200, 20, 'white')
+    }
+    function start() {
+        game = setInterval(() => {
+            gameObject.moveThings();
+            gameObject.drawScreen();
+        }, 1000 / fps);
+        gameStatus = 'running';
+    }
+    function stop() {
+        clearInterval(game);
+        let print = new drawScreen();
+        print.printText('Game Paused', false)
+        print.printText('Press enter to resume', true, '20px')
+        gameStatus = 'stopped'
+    }
+    async function gameOver() {
+        clearInterval(game);
+        await delay(100);
+        let print = new drawScreen();
+        print.printText('Game Over', false, '30px', 'red')
+        print.printText('Press enter to restart', true, '20px')
+        gameStatus = 'stopped'
+    }
+    class drawScreen {
+        constructor() {
+            fillBlack();
+        }
+        welcome() {
+            this.printText('Welcome to game');
+            this.printText('Press space to start', true, '20px')
+        }
+        printText(text, ifSubText, fontSize = '30px', color) {
+            content.font = fontSize + " Comic Sans MS";
+            content.fillStyle = color ? color : "white";
+            content.textAlign = "center";
+            content.fillText(text, gameScreen.width / 2, ifSubText ? gameScreen.height / 2 : gameScreen.height / 2 - 30);
+        }
+        async startLoader(time) {
+            let i = 1;
+            while (i < time) {
+                fillBlack();
+                this.printText('Loading ' + ' . . . . . . . . . . . . . . . . . . '.slice(0, i * 2));
+                await delay(1000);
+                i++;
+            }
+            fillBlack();
+            this.printText('Game loaded press enter to start')
+            this.printText('Press 4 to left & 6 to right', true, '20px')
+        }
+        async start() {
+            await this.startLoader(3);
+        }
+
+    }
+    class playGame {
+        moveThings() {
+            ballPosition.x = ballPosition.x + speed.hori;
+            ballPosition.y = ballPosition.y + speed.vert;
+            if (ballPosition.x < 0 || ballPosition.x > gameScreen.width) {
+                speed.hori = -speed.hori;
+            }
+            if (ballPosition.y < 0) {
+                speed.vert = -speed.vert;
+            }
+            if (ballPosition.y > gameScreen.height - 20) {
+                if (padPosition + 200 > ballPosition.x && padPosition < ballPosition.x) {
+                    speed.vert = -this.returnSpeed();
+                } else {
+                    gameOver();
+                    ballPosition.y = this.returnSpeed();
+                    ballPosition.x = this.returnSpeed() * 100;
+                }
+            }
+        }
+        returnSpeed() {
+            let speed = Math.floor(Math.random() * 10);
+            if (speed == 0) speed = 5;
+            return speed;
+        }
+        movePad(direction) {
+            if (direction == 'left' && padPosition > 0) {
+                padPosition = padPosition - 100 < 0 ? 0 : padPosition - 100;
+            }
+            else if (direction == 'right' && padPosition < gameScreen.width - 200) {
+                padPosition = padPosition + 100 > gameScreen.width - 200 ? gameScreen.width - 200 : padPosition + 100;
+            }
+        }
+        putBallInPlaceAfterResizing() {
+            if (ballPosition.x > gameScreen.width)
+                ballPosition.x = gameScreen.width - 5;
+            if (ballPosition.y > gameScreen.height)
+                ballPosition.y = gameScreen.height - 5;
+            if(padPosition>gameScreen.width)
+                padPosition= gameScreen.width-205;
+        }
+        drawScreen() {
+            fillBlack();
+            drawBall();
+            drawPad();
+        }
+    }
+</script>
+
+</html>

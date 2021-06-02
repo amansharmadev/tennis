@@ -9,4 +9,4 @@
 
 
 
-* Info: This game was the made for fun when I was learning Javascript
+* Info: This game was made for fun when I was learning Javascript

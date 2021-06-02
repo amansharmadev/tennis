@@ -3,7 +3,7 @@
 ### A Simple HTML game based on pure JS and canvas tag
 
 
-### Demo
+## Demo
 
 [Click here to play](https://amansharmadev.github.io/tennis/)
 
